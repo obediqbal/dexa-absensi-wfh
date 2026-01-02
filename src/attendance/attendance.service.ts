@@ -251,9 +251,7 @@ export class AttendanceService {
                 (where.clockIn as Record<string, Date>).gte = new Date(clockInStart);
             }
             if (clockInEnd) {
-                const end = new Date(clockInEnd);
-                end.setHours(23, 59, 59, 999);
-                (where.clockIn as Record<string, Date>).lte = end;
+                (where.clockIn as Record<string, Date>).lte = new Date(clockInEnd);
             }
         }
 
@@ -263,9 +261,7 @@ export class AttendanceService {
                 (where.clockOut as Record<string, Date>).gte = new Date(clockOutStart);
             }
             if (clockOutEnd) {
-                const end = new Date(clockOutEnd);
-                end.setHours(23, 59, 59, 999);
-                (where.clockOut as Record<string, Date>).lte = end;
+                (where.clockOut as Record<string, Date>).lte = new Date(clockOutEnd);
             }
         }
 
