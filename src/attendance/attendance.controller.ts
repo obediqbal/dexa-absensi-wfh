@@ -16,11 +16,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
 import { AttendanceService } from './attendance.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { CurrentUser as ICurrentUser } from '../auth/interfaces/jwt-payload.interface';
 import { ClockInDto } from './dto/clock-in.dto';
 import { ClockOutDto } from './dto/clock-out.dto';
 import { AttendanceQueryDto } from './dto/attendance-query.dto';
+import { AdminAttendanceQueryDto } from './dto/admin-attendance-query.dto';
 import {
     AttendanceResponseDto,
     PaginatedAttendanceResponseDto,
@@ -85,4 +88,14 @@ export class AttendanceController {
     ): Promise<AttendanceResponseDto> {
         return this.attendanceService.getAttendanceById(user.id, id);
     }
+
+    @Get('admin/all')
+    @UseGuards(RolesGuard)
+    @Roles('ADMIN')
+    async getAllAttendances(
+        @Query() query: AdminAttendanceQueryDto,
+    ): Promise<PaginatedAttendanceResponseDto> {
+        return this.attendanceService.getAllAttendances(query);
+    }
 }
+

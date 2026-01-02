@@ -5,6 +5,7 @@ import { UploadService } from '../upload/upload.service';
 import { ClockInDto } from './dto/clock-in.dto';
 import { ClockOutDto } from './dto/clock-out.dto';
 import { AttendanceQueryDto } from './dto/attendance-query.dto';
+import { AdminAttendanceQueryDto } from './dto/admin-attendance-query.dto';
 import {
     AttendanceResponseDto,
     PaginatedAttendanceResponseDto,
@@ -219,5 +220,83 @@ export class AttendanceService {
             ? await this.uploadService.getSignedUrl(attendance.clockInPhotoKey)
             : null;
         return new AttendanceResponseDto(attendance, signedUrl ?? undefined);
+    }
+
+    async getAllAttendances(
+        query: AdminAttendanceQueryDto,
+    ): Promise<PaginatedAttendanceResponseDto> {
+        const {
+            page = 1,
+            limit = 10,
+            staffId,
+            clockInStart,
+            clockInEnd,
+            clockOutStart,
+            clockOutEnd,
+            sortBy = 'clockIn',
+            sortOrder = 'desc',
+        } = query;
+
+        const skip = (page - 1) * limit;
+
+        const where: Record<string, unknown> = {};
+
+        if (staffId) {
+            where.staffId = staffId;
+        }
+
+        if (clockInStart || clockInEnd) {
+            where.clockIn = {};
+            if (clockInStart) {
+                (where.clockIn as Record<string, Date>).gte = new Date(clockInStart);
+            }
+            if (clockInEnd) {
+                const end = new Date(clockInEnd);
+                end.setHours(23, 59, 59, 999);
+                (where.clockIn as Record<string, Date>).lte = end;
+            }
+        }
+
+        if (clockOutStart || clockOutEnd) {
+            where.clockOut = {};
+            if (clockOutStart) {
+                (where.clockOut as Record<string, Date>).gte = new Date(clockOutStart);
+            }
+            if (clockOutEnd) {
+                const end = new Date(clockOutEnd);
+                end.setHours(23, 59, 59, 999);
+                (where.clockOut as Record<string, Date>).lte = end;
+            }
+        }
+
+        const orderBy = { [sortBy]: sortOrder };
+
+        const [attendances, total] = await Promise.all([
+            this.prisma.attendance.findMany({
+                where,
+                orderBy,
+                skip,
+                take: limit,
+            }),
+            this.prisma.attendance.count({ where }),
+        ]);
+
+        const attendancesWithSignedUrls = await Promise.all(
+            attendances.map(async (attendance) => {
+                const clockInSignedUrl = attendance.clockInPhotoKey
+                    ? await this.uploadService.getSignedUrl(attendance.clockInPhotoKey)
+                    : null;
+                const clockOutSignedUrl = attendance.clockOutPhotoKey
+                    ? await this.uploadService.getSignedUrl(attendance.clockOutPhotoKey)
+                    : null;
+                return new AttendanceResponseDto(
+                    attendance,
+                    clockInSignedUrl ?? undefined,
+                    clockOutSignedUrl ?? undefined,
+                );
+            }),
+        );
+
+        return new PaginatedAttendanceResponseDto(attendancesWithSignedUrls, total, page, limit);
     }
 }
