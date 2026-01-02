@@ -14,9 +14,9 @@ model Attendance {
   staffId               String        @map("staff_id")
   clockIn               DateTime      @map("clock_in")
   clockOut              DateTime?     @map("clock_out")
-  photoUrl              String?       @map("photo_url") @db.Text
-  photoKey              String?       @map("photo_key") @db.VarChar(256)
-  uploadStatus          UploadStatus  @default(PENDING) @map("upload_status")
+  clockInPhotoUrl       String?       @map("clock_in_photo_url") @db.Text
+  clockInPhotoKey       String?       @map("clock_in_photo_key") @db.VarChar(256)
+  clockInUploadStatus   UploadStatus  @default(PENDING) @map("clock_in_upload_status")
   clockOutPhotoUrl      String?       @map("clock_out_photo_url") @db.Text
   clockOutPhotoKey      String?       @map("clock_out_photo_key") @db.VarChar(256)
   clockOutUploadStatus  UploadStatus? @map("clock_out_upload_status")

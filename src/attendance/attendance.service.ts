@@ -52,9 +52,9 @@ export class AttendanceService {
             data: {
                 staffId,
                 clockIn: new Date(),
-                photoUrl: null,
-                photoKey: null,
-                uploadStatus: 'PENDING',
+                clockInPhotoUrl: null,
+                clockInPhotoKey: null,
+                clockInUploadStatus: 'PENDING',
                 ipAddress,
                 userAgent,
                 notes: dto.notes,
@@ -123,8 +123,8 @@ export class AttendanceService {
             ),
         );
 
-        const signedUrl = updatedAttendance.photoKey
-            ? await this.uploadService.getSignedUrl(updatedAttendance.photoKey)
+        const signedUrl = updatedAttendance.clockInPhotoKey
+            ? await this.uploadService.getSignedUrl(updatedAttendance.clockInPhotoKey)
             : null;
 
         return new AttendanceResponseDto(updatedAttendance, signedUrl ?? undefined);
@@ -151,8 +151,8 @@ export class AttendanceService {
             return null;
         }
 
-        const signedUrl = attendance.photoKey
-            ? await this.uploadService.getSignedUrl(attendance.photoKey)
+        const signedUrl = attendance.clockInPhotoKey
+            ? await this.uploadService.getSignedUrl(attendance.clockInPhotoKey)
             : null;
         return new AttendanceResponseDto(attendance, signedUrl ?? undefined);
     }
@@ -190,8 +190,8 @@ export class AttendanceService {
 
         const attendancesWithSignedUrls = await Promise.all(
             attendances.map(async (attendance) => {
-                const signedUrl = attendance.photoKey
-                    ? await this.uploadService.getSignedUrl(attendance.photoKey)
+                const signedUrl = attendance.clockInPhotoKey
+                    ? await this.uploadService.getSignedUrl(attendance.clockInPhotoKey)
                     : null;
                 return new AttendanceResponseDto(attendance, signedUrl ?? undefined);
             }),
@@ -215,8 +215,8 @@ export class AttendanceService {
             throw new NotFoundException('Attendance record not found');
         }
 
-        const signedUrl = attendance.photoKey
-            ? await this.uploadService.getSignedUrl(attendance.photoKey)
+        const signedUrl = attendance.clockInPhotoKey
+            ? await this.uploadService.getSignedUrl(attendance.clockInPhotoKey)
             : null;
         return new AttendanceResponseDto(attendance, signedUrl ?? undefined);
     }

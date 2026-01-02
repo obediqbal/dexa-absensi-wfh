@@ -5,8 +5,8 @@ export class AttendanceResponseDto {
     staffId: string;
     clockIn: Date;
     clockOut: Date | null;
-    photoUrl: string | null;
-    uploadStatus: UploadStatus;
+    clockInPhotoUrl: string | null;
+    clockInUploadStatus: UploadStatus;
     clockOutPhotoUrl: string | null;
     clockOutUploadStatus: UploadStatus | null;
     notes: string | null;
@@ -14,15 +14,15 @@ export class AttendanceResponseDto {
 
     constructor(
         attendance: Attendance,
-        signedPhotoUrl?: string,
+        signedClockInPhotoUrl?: string,
         signedClockOutPhotoUrl?: string,
     ) {
         this.id = attendance.id;
         this.staffId = attendance.staffId;
         this.clockIn = attendance.clockIn;
         this.clockOut = attendance.clockOut;
-        this.photoUrl = signedPhotoUrl || attendance.photoUrl;
-        this.uploadStatus = attendance.uploadStatus;
+        this.clockInPhotoUrl = signedClockInPhotoUrl || attendance.clockInPhotoUrl;
+        this.clockInUploadStatus = attendance.clockInUploadStatus;
         this.clockOutPhotoUrl = signedClockOutPhotoUrl || attendance.clockOutPhotoUrl;
         this.clockOutUploadStatus = attendance.clockOutUploadStatus;
         this.notes = attendance.notes;

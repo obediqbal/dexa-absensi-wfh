@@ -26,7 +26,7 @@ export class PhotoUploadListener {
                 where: { id: attendanceId },
                 data: isClockOut
                     ? { clockOutUploadStatus: 'UPLOADING' }
-                    : { uploadStatus: 'UPLOADING' },
+                    : { clockInUploadStatus: 'UPLOADING' },
             });
 
             const file = {
@@ -47,9 +47,9 @@ export class PhotoUploadListener {
                         clockOutUploadStatus: 'COMPLETED',
                     }
                     : {
-                        photoUrl: uploadResult.url,
-                        photoKey: uploadResult.key,
-                        uploadStatus: 'COMPLETED',
+                        clockInPhotoUrl: uploadResult.url,
+                        clockInPhotoKey: uploadResult.key,
+                        clockInUploadStatus: 'COMPLETED',
                     },
             });
 
@@ -61,7 +61,7 @@ export class PhotoUploadListener {
                 where: { id: attendanceId },
                 data: isClockOut
                     ? { clockOutUploadStatus: 'FAILED' }
-                    : { uploadStatus: 'FAILED' },
+                    : { clockInUploadStatus: 'FAILED' },
             }).catch((updateError) => {
                 this.logger.error(`Failed to update status to FAILED:`, updateError);
             });
