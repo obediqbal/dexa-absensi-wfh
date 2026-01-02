@@ -14,7 +14,7 @@ model Attendance {
   staffId    String    @map("staff_id")
   clockIn    DateTime  @map("clock_in")
   clockOut   DateTime? @map("clock_out")
-  photoUrl   String    @map("photo_url") @db.VarChar(512)
+  photoUrl   String    @map("photo_url") @db.Text
   photoKey   String    @map("photo_key") @db.VarChar(256)
   ipAddress  String?   @map("ip_address") @db.VarChar(45)
   userAgent  String?   @map("user_agent") @db.VarChar(512)
