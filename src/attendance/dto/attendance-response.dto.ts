@@ -1,11 +1,12 @@
-import { Attendance } from '@prisma/client';
+import { Attendance, UploadStatus } from '@prisma/client';
 
 export class AttendanceResponseDto {
     id: string;
     staffId: string;
     clockIn: Date;
     clockOut: Date | null;
-    photoUrl: string;
+    photoUrl: string | null;
+    uploadStatus: UploadStatus;
     notes: string | null;
     createdAt: Date;
 
@@ -15,6 +16,7 @@ export class AttendanceResponseDto {
         this.clockIn = attendance.clockIn;
         this.clockOut = attendance.clockOut;
         this.photoUrl = signedPhotoUrl || attendance.photoUrl;
+        this.uploadStatus = attendance.uploadStatus;
         this.notes = attendance.notes;
         this.createdAt = attendance.createdAt;
     }

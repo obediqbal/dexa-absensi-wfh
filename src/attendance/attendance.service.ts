@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
-import { UploadService, UploadResult } from '../upload/upload.service';
+import { UploadService } from '../upload/upload.service';
 import { ClockInDto } from './dto/clock-in.dto';
 import { ClockOutDto } from './dto/clock-out.dto';
 import { AttendanceQueryDto } from './dto/attendance-query.dto';
@@ -8,12 +9,14 @@ import {
     AttendanceResponseDto,
     PaginatedAttendanceResponseDto,
 } from './dto/attendance-response.dto';
+import { PhotoUploadEvent } from './events/photo-upload.event';
 
 @Injectable()
 export class AttendanceService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly uploadService: UploadService,
+        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     async clockIn(
@@ -43,19 +46,31 @@ export class AttendanceService {
             throw new BadRequestException('You have already clocked in today. Please clock out first.');
         }
 
-        const uploadResult: UploadResult = await this.uploadService.uploadFile(photo, staffId);
+        this.uploadService.validateFile(photo);
 
         const attendance = await this.prisma.attendance.create({
             data: {
                 staffId,
                 clockIn: new Date(),
-                photoUrl: uploadResult.url,
-                photoKey: uploadResult.key,
+                photoUrl: null,
+                photoKey: null,
+                uploadStatus: 'PENDING',
                 ipAddress,
                 userAgent,
                 notes: dto.notes,
             },
         });
+
+        this.eventEmitter.emit(
+            'photo.upload',
+            new PhotoUploadEvent(
+                attendance.id,
+                staffId,
+                photo.buffer,
+                photo.originalname,
+                photo.mimetype,
+            ),
+        );
 
         return new AttendanceResponseDto(attendance);
     }
@@ -92,9 +107,11 @@ export class AttendanceService {
             },
         });
 
-        const signedUrl = await this.uploadService.getSignedUrl(updatedAttendance.photoKey);
+        const signedUrl = updatedAttendance.photoKey
+            ? await this.uploadService.getSignedUrl(updatedAttendance.photoKey)
+            : null;
 
-        return new AttendanceResponseDto(updatedAttendance, signedUrl);
+        return new AttendanceResponseDto(updatedAttendance, signedUrl ?? undefined);
     }
 
     async getTodayAttendance(staffId: string): Promise<AttendanceResponseDto | null> {
@@ -118,8 +135,10 @@ export class AttendanceService {
             return null;
         }
 
-        const signedUrl = await this.uploadService.getSignedUrl(attendance.photoKey);
-        return new AttendanceResponseDto(attendance, signedUrl);
+        const signedUrl = attendance.photoKey
+            ? await this.uploadService.getSignedUrl(attendance.photoKey)
+            : null;
+        return new AttendanceResponseDto(attendance, signedUrl ?? undefined);
     }
 
     async getAttendanceHistory(
@@ -155,8 +174,10 @@ export class AttendanceService {
 
         const attendancesWithSignedUrls = await Promise.all(
             attendances.map(async (attendance) => {
-                const signedUrl = await this.uploadService.getSignedUrl(attendance.photoKey);
-                return new AttendanceResponseDto(attendance, signedUrl);
+                const signedUrl = attendance.photoKey
+                    ? await this.uploadService.getSignedUrl(attendance.photoKey)
+                    : null;
+                return new AttendanceResponseDto(attendance, signedUrl ?? undefined);
             }),
         );
 
@@ -178,7 +199,9 @@ export class AttendanceService {
             throw new NotFoundException('Attendance record not found');
         }
 
-        const signedUrl = await this.uploadService.getSignedUrl(attendance.photoKey);
-        return new AttendanceResponseDto(attendance, signedUrl);
+        const signedUrl = attendance.photoKey
+            ? await this.uploadService.getSignedUrl(attendance.photoKey)
+            : null;
+        return new AttendanceResponseDto(attendance, signedUrl ?? undefined);
     }
 }
