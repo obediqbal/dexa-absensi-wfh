@@ -10,19 +10,28 @@ datasource db {
 }
 
 model Attendance {
-  id         String    @id @default(uuid())
-  staffId    String    @map("staff_id")
-  clockIn    DateTime  @map("clock_in")
-  clockOut   DateTime? @map("clock_out")
-  photoUrl   String    @map("photo_url") @db.Text
-  photoKey   String    @map("photo_key") @db.VarChar(256)
-  ipAddress  String?   @map("ip_address") @db.VarChar(45)
-  userAgent  String?   @map("user_agent") @db.VarChar(512)
-  notes      String?   @db.Text
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  id           String       @id @default(uuid())
+  staffId      String       @map("staff_id")
+  clockIn      DateTime     @map("clock_in")
+  clockOut     DateTime?    @map("clock_out")
+  photoUrl     String?      @map("photo_url") @db.Text
+  photoKey     String?      @map("photo_key") @db.VarChar(256)
+  uploadStatus UploadStatus @default(PENDING) @map("upload_status")
+  ipAddress    String?      @map("ip_address") @db.VarChar(45)
+  userAgent    String?      @map("user_agent") @db.VarChar(512)
+  notes        String?      @db.Text
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
 
   @@index([staffId])
   @@index([clockIn])
   @@map("attendances")
 }
+
+enum UploadStatus {
+  PENDING
+  UPLOADING
+  COMPLETED
+  FAILED
+}
+
