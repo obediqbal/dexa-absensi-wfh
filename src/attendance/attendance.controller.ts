@@ -54,11 +54,13 @@ export class AttendanceController {
 
     @Post('clock-out')
     @HttpCode(HttpStatus.OK)
+    @UseInterceptors(FileInterceptor('photo'))
     async clockOut(
         @CurrentUser() user: ICurrentUser,
+        @UploadedFile() photo: Express.Multer.File,
         @Body() dto: ClockOutDto,
     ): Promise<AttendanceResponseDto> {
-        return this.attendanceService.clockOut(user.id, dto);
+        return this.attendanceService.clockOut(user.id, photo, dto);
     }
 
     @Get('today')

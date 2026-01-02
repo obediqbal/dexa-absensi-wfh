@@ -15,14 +15,18 @@ export class PhotoUploadListener {
 
     @OnEvent('photo.upload')
     async handlePhotoUpload(event: PhotoUploadEvent): Promise<void> {
-        const { attendanceId, staffId, fileBuffer, filename, mimetype } = event;
+        const { attendanceId, staffId, fileBuffer, filename, mimetype, photoType } = event;
 
-        this.logger.log(`Starting background upload for attendance ${attendanceId}`);
+        this.logger.log(`Starting background ${photoType} upload for attendance ${attendanceId}`);
+
+        const isClockOut = photoType === 'CLOCK_OUT';
 
         try {
             await this.prisma.attendance.update({
                 where: { id: attendanceId },
-                data: { uploadStatus: 'UPLOADING' },
+                data: isClockOut
+                    ? { clockOutUploadStatus: 'UPLOADING' }
+                    : { uploadStatus: 'UPLOADING' },
             });
 
             const file = {
@@ -36,23 +40,32 @@ export class PhotoUploadListener {
 
             await this.prisma.attendance.update({
                 where: { id: attendanceId },
-                data: {
-                    photoUrl: uploadResult.url,
-                    photoKey: uploadResult.key,
-                    uploadStatus: 'COMPLETED',
-                },
+                data: isClockOut
+                    ? {
+                        clockOutPhotoUrl: uploadResult.url,
+                        clockOutPhotoKey: uploadResult.key,
+                        clockOutUploadStatus: 'COMPLETED',
+                    }
+                    : {
+                        photoUrl: uploadResult.url,
+                        photoKey: uploadResult.key,
+                        uploadStatus: 'COMPLETED',
+                    },
             });
 
-            this.logger.log(`Upload completed for attendance ${attendanceId}`);
+            this.logger.log(`${photoType} upload completed for attendance ${attendanceId}`);
         } catch (error) {
-            this.logger.error(`Upload failed for attendance ${attendanceId}:`, error);
+            this.logger.error(`${photoType} upload failed for attendance ${attendanceId}:`, error);
 
             await this.prisma.attendance.update({
                 where: { id: attendanceId },
-                data: { uploadStatus: 'FAILED' },
+                data: isClockOut
+                    ? { clockOutUploadStatus: 'FAILED' }
+                    : { uploadStatus: 'FAILED' },
             }).catch((updateError) => {
                 this.logger.error(`Failed to update status to FAILED:`, updateError);
             });
         }
     }
 }
+

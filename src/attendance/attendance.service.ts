@@ -77,6 +77,7 @@ export class AttendanceService {
 
     async clockOut(
         staffId: string,
+        photo: Express.Multer.File,
         dto: ClockOutDto,
     ): Promise<AttendanceResponseDto> {
         const today = new Date();
@@ -99,13 +100,28 @@ export class AttendanceService {
             throw new BadRequestException('No active clock-in found for today. Please clock in first.');
         }
 
+        this.uploadService.validateFile(photo);
+
         const updatedAttendance = await this.prisma.attendance.update({
             where: { id: attendance.id },
             data: {
                 clockOut: new Date(),
+                clockOutUploadStatus: 'PENDING',
                 notes: dto.notes ? `${attendance.notes || ''}\n${dto.notes}`.trim() : attendance.notes,
             },
         });
+
+        this.eventEmitter.emit(
+            'photo.upload',
+            new PhotoUploadEvent(
+                attendance.id,
+                staffId,
+                photo.buffer,
+                photo.originalname,
+                photo.mimetype,
+                'CLOCK_OUT',
+            ),
+        );
 
         const signedUrl = updatedAttendance.photoKey
             ? await this.uploadService.getSignedUrl(updatedAttendance.photoKey)

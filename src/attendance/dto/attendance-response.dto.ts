@@ -7,16 +7,24 @@ export class AttendanceResponseDto {
     clockOut: Date | null;
     photoUrl: string | null;
     uploadStatus: UploadStatus;
+    clockOutPhotoUrl: string | null;
+    clockOutUploadStatus: UploadStatus | null;
     notes: string | null;
     createdAt: Date;
 
-    constructor(attendance: Attendance, signedPhotoUrl?: string) {
+    constructor(
+        attendance: Attendance,
+        signedPhotoUrl?: string,
+        signedClockOutPhotoUrl?: string,
+    ) {
         this.id = attendance.id;
         this.staffId = attendance.staffId;
         this.clockIn = attendance.clockIn;
         this.clockOut = attendance.clockOut;
         this.photoUrl = signedPhotoUrl || attendance.photoUrl;
         this.uploadStatus = attendance.uploadStatus;
+        this.clockOutPhotoUrl = signedClockOutPhotoUrl || attendance.clockOutPhotoUrl;
+        this.clockOutUploadStatus = attendance.clockOutUploadStatus;
         this.notes = attendance.notes;
         this.createdAt = attendance.createdAt;
     }
