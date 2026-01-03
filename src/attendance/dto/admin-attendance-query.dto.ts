@@ -1,5 +1,15 @@
-import { Type } from 'class-transformer';
-import { IsOptional, IsInt, Min, Max, IsDateString, IsString, IsIn } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+import { IsOptional, IsInt, Min, Max, IsDateString, IsString, IsIn, IsArray } from 'class-validator';
+
+export const SORTABLE_FIELDS = [
+    'clockIn',
+    'clockOut',
+    'createdAt',
+] as const;
+
+export type SortableField = (typeof SORTABLE_FIELDS)[number];
+
+export type FilterBy = Partial<Record<SortableField | 'id', string | Date | null>>;
 
 export class AdminAttendanceQueryDto {
     @IsOptional()
@@ -16,8 +26,14 @@ export class AdminAttendanceQueryDto {
     limit?: number = 10;
 
     @IsOptional()
-    @IsString()
-    staffId?: string;
+    @IsArray()
+    @IsString({ each: true })
+    @Transform(({ value }) => {
+        if (!value) return undefined;
+        if (Array.isArray(value)) return value;
+        return value.split(',').map((s: string) => s.trim());
+    })
+    staffIds?: string[];
 
     @IsOptional()
     @IsDateString()
@@ -36,10 +52,24 @@ export class AdminAttendanceQueryDto {
     clockOutEnd?: string;
 
     @IsOptional()
-    @IsIn(['clockIn', 'clockOut'])
-    sortBy?: 'clockIn' | 'clockOut' = 'clockIn';
+    @IsString()
+    @IsIn(SORTABLE_FIELDS)
+    sortBy?: SortableField = 'clockIn';
 
     @IsOptional()
+    @IsString()
     @IsIn(['asc', 'desc'])
     sortOrder?: 'asc' | 'desc' = 'desc';
+
+    @IsOptional()
+    @IsString()
+    @Transform(({ value }) => {
+        if (!value) return undefined;
+        try {
+            return JSON.parse(value);
+        } catch {
+            return undefined;
+        }
+    })
+    filterBy?: FilterBy;
 }

@@ -228,21 +228,22 @@ export class AttendanceService {
         const {
             page = 1,
             limit = 10,
-            staffId,
+            staffIds,
             clockInStart,
             clockInEnd,
             clockOutStart,
             clockOutEnd,
             sortBy = 'clockIn',
             sortOrder = 'desc',
+            filterBy,
         } = query;
 
         const skip = (page - 1) * limit;
 
         const where: Record<string, unknown> = {};
 
-        if (staffId) {
-            where.staffId = staffId;
+        if (staffIds && staffIds.length > 0) {
+            where.staffId = { in: staffIds };
         }
 
         if (clockInStart || clockInEnd) {
@@ -262,6 +263,18 @@ export class AttendanceService {
             }
             if (clockOutEnd) {
                 (where.clockOut as Record<string, Date>).lte = new Date(clockOutEnd);
+            }
+        }
+
+        if (filterBy) {
+            for (const [key, value] of Object.entries(filterBy)) {
+                if (value !== undefined && value !== null) {
+                    if (key === 'id') {
+                        where.id = value;
+                    } else if (key === 'clockIn' || key === 'clockOut' || key === 'createdAt') {
+                        where[key] = value instanceof Date ? value : new Date(value as string);
+                    }
+                }
             }
         }
 
