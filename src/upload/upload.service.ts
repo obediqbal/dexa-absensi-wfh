@@ -76,8 +76,10 @@ export class UploadService {
                 expires: Date.now() + 60 * 60 * 1000,
             });
 
+            const cleanUrl = signedUrl.split('?')[0];
+
             return {
-                url: signedUrl,
+                url: cleanUrl,
                 key,
             };
         } catch (error) {
@@ -95,7 +97,7 @@ export class UploadService {
                 expires: Date.now() + expirationMinutes * 60 * 1000,
             });
 
-            return signedUrl;
+            return signedUrl.split('?')[0];
         } catch (error) {
             throw new InternalServerErrorException('Failed to generate signed URL');
         }
