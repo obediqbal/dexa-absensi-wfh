@@ -131,18 +131,37 @@ export class AttendanceService {
         return new AttendanceResponseDto(updatedAttendance, signedUrl ?? undefined);
     }
 
-    async getTodayAttendance(staffId: string): Promise<AttendanceResponseDto | null> {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+    async getTodayAttendance(staffId: string, timezone?: string): Promise<AttendanceResponseDto | null> {
+        // Calculate "today" based on the user's timezone
+        // If timezone is provided (e.g., 'Asia/Jakarta', 'America/New_York'), use it
+        // Otherwise, fall back to UTC
+        const userTimezone = timezone || 'UTC';
+
+        // Get current time in the user's timezone
+        const now = new Date();
+        const userNowString = now.toLocaleString('en-US', { timeZone: userTimezone });
+        const userNow = new Date(userNowString);
+
+        // Set to start of day in user's timezone
+        const todayStart = new Date(userNow);
+        todayStart.setHours(0, 0, 0, 0);
+
+        // Set to start of next day in user's timezone
+        const tomorrowStart = new Date(todayStart);
+        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+        // Convert back to UTC for database query
+        // We need to find the UTC equivalent of the user's local day boundaries
+        const userOffset = this.getTimezoneOffset(userTimezone);
+        const todayStartUTC = new Date(todayStart.getTime() - userOffset);
+        const tomorrowStartUTC = new Date(tomorrowStart.getTime() - userOffset);
 
         const attendance = await this.prisma.attendance.findFirst({
             where: {
                 staffId,
                 clockIn: {
-                    gte: today,
-                    lt: tomorrow,
+                    gte: todayStartUTC,
+                    lt: tomorrowStartUTC,
                 },
             },
             orderBy: { clockIn: 'desc' },
@@ -156,6 +175,14 @@ export class AttendanceService {
             ? await this.uploadService.getSignedUrl(attendance.clockInPhotoKey)
             : null;
         return new AttendanceResponseDto(attendance, signedUrl ?? undefined);
+    }
+
+    private getTimezoneOffset(timezone: string): number {
+        // Get the timezone offset in milliseconds
+        const now = new Date();
+        const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+        const tzDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+        return tzDate.getTime() - utcDate.getTime();
     }
 
     async getAttendanceHistory(

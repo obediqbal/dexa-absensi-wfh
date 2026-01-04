@@ -69,8 +69,9 @@ export class AttendanceController {
     @Get('today')
     async getTodayAttendance(
         @CurrentUser() user: ICurrentUser,
+        @Query('timezone') timezone?: string,
     ): Promise<AttendanceResponseDto | null> {
-        return this.attendanceService.getTodayAttendance(user.id);
+        return this.attendanceService.getTodayAttendance(user.id, timezone);
     }
 
     @Get('history')
